@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Birthday Quest - Trịnh Gia An</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts with full Vietnamese support -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@500;700&family=Press+Start+2P&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        pastelPink: '#FFD1DC',
+                        pastelPurple: '#E0BBE4',
+                        pastelYellow: '#FFF5BA',
+                        pastelGreen: '#C7CEEA',
+                        kawaiiBg: '#FFF0F5',
+                        accentPink: '#FF6B8B',
+                        darkPink: '#D81B60'
+                    },
+                    fontFamily: {
+                        pixel: ['"Press Start 2P"', 'cursive'],
+                        body: ['Quicksand', 'Comfortaa', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Quicksand', 'Comfortaa', sans-serif;
+            background-color: #FFF0F5;
+            background-image: radial-gradient(#FFD1DC 1.5px, transparent 1.5px), radial-gradient(#E0BBE4 1.5px, #FFF0F5 1.5px);
+            background-size: 60px 60px;
+            background-position: 0 0, 30px 30px;
+            overflow-x: hidden;
+            touch-action: manipulation;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #FFF0F5;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #FF9EAA;
+            border-radius: 10px;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(1deg); }
+        }
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .pixel-btn {
+            box-shadow: 0px 6px 0px #C75B7A, 0px 8px 15px rgba(0,0,0,0.1);
+            transition: all 0.15s ease;
+        }
+        .pixel-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0px 2px 0px #C75B7A, 0px 3px 5px rgba(0,0,0,0.1);
+        }
+
+        .card-container {
+            perspective: 1000px;
+        }
+        .card-inner {
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-style: preserve-3d;
+        }
+        .card-inner.flipped {
+            transform: rotateY(180deg);
+        }
+        .card-front, .card-back {
+            backface-visibility: hidden;
+        }
+        .card-back {
+            transform: rotateY(180deg);
+        }
+
+        @keyframes heartRise {
+            0% { opacity: 1; transform: translateY(0) scale(0.8); }
+            100% { opacity: 0; transform: translateY(-120px) scale(1.3) rotate(20deg); }
+        }
+        .floating-heart {
+            position: absolute;
+            pointer-events: none;
+            animation: heartRise 2s ease-out forwards;
+        }
+
+        @keyframes flameGlow {
+            0%, 100% { transform: scale(1) rotate(-3deg); filter: drop-shadow(0 0 10px #f59e0b); }
+            50% { transform: scale(1.2) rotate(3deg); filter: drop-shadow(0 0 18px #ef4444); }
+        }
+        .flame-anim {
+            animation: flameGlow 0.6s infinite alternate ease-in-out;
+            transform-origin: bottom center;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-gray-700 flex flex-col justify-between relative selection:bg-pink-200">
+
+    <!-- Nhạc Happy Birthday từ GitHub M4A -->
+    <audio id="bgmPlayer" loop preload="auto">
+        <source src="https://raw.githubusercontent.com/thichthitao1221-dev/Gian/ok/YTSave.to_YouTube_Media_vhVBWw6rId0_Happy-Birthday-Piano-Version_008_256k.m4a" type="audio/mp4">
+    </audio>
+
+    <div class="fixed top-4 right-4 z-50 flex items-center gap-2">
+        <button id="bgmToggle" onclick="toggleAudio()" class="bg-white/90 backdrop-blur border-2 border-pink-300 p-3 rounded-full shadow-md hover:scale-110 active:scale-95 transition text-pink-500 font-bold flex items-center justify-center w-12 h-12">
+            <i id="bgmIcon" class="fas fa-music text-pink-500"></i>
+        </button>
+    </div>
+
+    <!-- Main Container -->
+    <main class="container mx-auto px-4 py-8 max-w-2xl flex-grow flex flex-col justify-center items-center relative">
+
+        <!-- ================= MÀN HÌNH CHÀO MỪNG ================= -->
+        <section id="screen-title" class="w-full text-center flex flex-col items-center justify-center gap-6 py-8">
+            <div class="animate-float">
+                <div class="inline-block bg-pink-100 border-4 border-pink-400 rounded-3xl p-6 sm:p-8 shadow-xl relative">
+                    <div class="text-5xl sm:text-6xl mb-3">🎁✨🎂</div>
+                    <h1 class="font-pixel text-lg sm:text-2xl text-accentPink leading-relaxed tracking-wider">BIRTHDAY QUEST</h1>
+                    <p class="font-bold text-gray-700 mt-2 text-base sm:text-lg">Hành Trình Tuổi Mới Của <span class="text-pink-600 font-bold underline decoration-wavy decoration-pink-400" id="userNameTitle">Trịnh Gia An</span>!</p>
+                    <div class="absolute -top-3 -right-3 bg-yellow-300 text-yellow-800 font-bold text-xs px-3 py-1 rounded-full border border-yellow-500 animate-pulse">LVL UP!</div>
+                </div>
+            </div>
+
+            <p class="text-gray-600 max-w-md text-sm sm:text-base bg-white/80 p-4 rounded-2xl border border-pink-200 shadow-sm font-semibold">
+                Chào mừng em An đến với nhiệm vụ đặc biệt! Hãy vượt qua 3 trạm thử thách để mở khóa phần quà sinh nhật siêu bất ngờ nhé! 💖
+            </p>
+
+            <button onclick="startGame()" class="pixel-btn bg-pink-400 hover:bg-pink-500 text-white font-bold text-base px-8 py-4 rounded-2xl border-2 border-pink-600 cursor-pointer flex items-center gap-3 tracking-wide">
+                <span>BẮT ĐẦU VẬN HÀNH</span>
+                <i class="fas fa-play text-sm"></i>
+            </button>
+        </section>
+
+        <!-- ================= TRẠM 1: GAME GIẢI MÃ KỶ NIỆM (QUIZ) ================= -->
+        <section id="screen-station1" class="hidden w-full flex-col items-center gap-6">
+            <div class="w-full bg-white/90 p-3 rounded-2xl border-2 border-pink-300 flex items-center justify-between shadow-sm font-bold">
+                <span class="text-xs sm:text-sm text-pink-600"><i class="fas fa-flag-checkered mr-1.5"></i> TRẠM 1: GIẢI MÃ KỶ NIỆM</span>
+                <span class="text-xs text-gray-500" id="quizProgressText">Câu 1/3</span>
+            </div>
+
+            <div class="w-full bg-white rounded-3xl p-6 sm:p-8 border-4 border-pink-300 shadow-lg relative">
+                <div class="text-center mb-6">
+                    <span id="quizBadge" class="bg-pink-100 text-pink-600 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Thử Thách Tình Bạn</span>
+                    <h2 id="quizQuestion" class="text-base sm:text-lg font-bold text-gray-800 mt-3 leading-snug">Đang tải câu hỏi...</h2>
+                </div>
+
+                <!-- Choice options -->
+                <div id="quizOptions" class="grid grid-cols-1 gap-3 w-full"></div>
+
+                <!-- Text input option -->
+                <div id="quizInputContainer" class="hidden flex-col gap-3">
+                    <input type="text" id="quizInput" placeholder="Nhập biệt danh hoặc gõ 'Oke'..." class="w-full p-4 border-2 border-pink-200 rounded-2xl focus:border-pink-400 focus:outline-none text-center font-bold text-gray-700">
+                    <button onclick="checkTextAnswer()" class="pixel-btn bg-pink-400 text-white font-bold py-3 rounded-2xl hover:bg-pink-500">
+                        Xác Nhận 🚀
+                    </button>
+                </div>
+
+                <!-- Feedback area -->
+                <div id="quizFeedback" class="hidden mt-4 p-3 rounded-2xl text-center font-bold text-sm"></div>
+
+                <!-- Nickname list reveal for Q3 -->
+                <div id="nicknameReveal" class="hidden mt-4 p-4 bg-pink-50 border-2 border-pink-200 rounded-2xl flex flex-col items-center gap-3">
+                    <h4 class="font-bold text-pink-600 text-sm">Danh sách biệt danh độc quyền của em An 💖</h4>
+                    <ul class="text-xs font-semibold text-gray-700 space-y-1 text-center">
+                        <li>• Conan 🕵️‍♂️</li>
+                        <li>• Én 🕊️</li>
+                        <li>• An An ✨</li>
+                        <li>• An Trịnh 👑</li>
+                        <li>• Khỉ đen Nagi đít nhọ 🐒</li>
+                        <li>• Khỉ đen 🐵</li>
+                        <li>• Khỉ 🙈</li>
+                    </ul>
+                    <button onclick="goToStation2()" class="pixel-btn bg-pink-400 hover:bg-pink-500 text-white font-bold text-xs sm:text-sm px-6 py-2.5 rounded-xl mt-2">
+                        Tiếp điiii ➔
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TRẠM 2: BẢO TÀNG KỶ NIỆM (GALLERY) ================= -->
+        <section id="screen-station2" class="hidden w-full flex-col items-center gap-6">
+            <div class="w-full bg-white/90 p-3 rounded-2xl border-2 border-pink-300 flex items-center justify-between shadow-sm font-bold">
+                <span class="text-xs sm:text-sm text-purple-600"><i class="fas fa-images mr-1.5"></i> TRẠM 2: BẢO TÀNG</span>
+                <span class="text-xs text-gray-500">Bấm tim ảnh đáng iuuu nhất!</span>
+            </div>
+
+            <div class="text-center">
+                <h2 class="font-bold text-lg sm:text-xl text-purple-600">Góc kỉ niệm đáng iuuu ✨</h2>
+                <p class="text-xs text-gray-500 mt-1 font-semibold">Tự do thả tim cho những bức ảnh siêu xịn xò rồi qua màn nha!</p>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 w-full" id="galleryGrid">
+                <!-- 8 Images generated dynamically -->
+            </div>
+
+            <button onclick="finishStation2()" class="pixel-btn bg-purple-400 hover:bg-purple-500 text-white font-bold text-xs sm:text-sm px-8 py-3.5 rounded-2xl border-2 border-purple-600 cursor-pointer mt-4">
+                ĐẾN TRẠM BÓI BÀI 🔮 ➔
+            </button>
+        </section>
+
+        <!-- ================= TRẠM 3: TIỆM BÓI BÀI TUỔI MỚI (TAROT CARDS) ================= -->
+        <section id="screen-station3" class="hidden w-full flex-col items-center gap-6">
+            <div class="w-full bg-white/90 p-3 rounded-2xl border-2 border-pink-300 flex items-center justify-between shadow-sm font-bold">
+                <span class="text-xs sm:text-sm text-indigo-600"><i class="fas fa-magic mr-1.5"></i> TRẠM 3: TIỆM BÓI BÀI</span>
+                <span class="text-xs text-gray-500" id="cardsDrawnCount">Đã lật: 0/3</span>
+            </div>
+
+            <div class="text-center">
+                <h2 class="font-bold text-lg text-indigo-600">QUẺ BÓI TUỔI MỚI ✨</h2>
+                <p class="text-xs text-gray-500 mt-1 font-semibold">Chạm vào từng lá bài để khám phá vận mệnh!</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
+                <!-- Card 1 -->
+                <div class="card-container h-64 cursor-pointer" onclick="flipCard(1)">
+                    <div id="card-inner-1" class="card-inner relative w-full h-full rounded-2xl shadow-md">
+                        <div class="card-front absolute inset-0 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-2xl border-4 border-white flex flex-col items-center justify-center p-4 text-white">
+                            <div class="text-3xl mb-2">🔮</div>
+                            <span class="font-bold text-xs text-yellow-200">LÁ BÀI 1</span>
+                            <span class="text-xs mt-2 font-bold opacity-80">Bấm để lật</span>
+                        </div>
+                        <div class="card-back absolute inset-0 bg-white rounded-2xl border-4 border-indigo-300 flex flex-col items-center justify-between p-4 text-center overflow-y-auto">
+                            <span class="text-2xl">💪✨</span>
+                            <h3 class="font-bold text-xs text-indigo-600 uppercase">Sức Khỏe & Năng Lượng</h3>
+                            <p class="text-xs text-gray-700 font-semibold leading-relaxed" id="fortune-text-1">Năng lượng tích cực, đẹp phi giới tính, cao 2 mét 67 múi bụng chắc như sầu riêng.</p>
+                            <span class="text-[10px] bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full font-bold">Quẻ Cực Phẩm</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="card-container h-64 cursor-pointer" onclick="flipCard(2)">
+                    <div id="card-inner-2" class="card-inner relative w-full h-full rounded-2xl shadow-md">
+                        <div class="card-front absolute inset-0 bg-gradient-to-br from-pink-400 to-red-400 rounded-2xl border-4 border-white flex flex-col items-center justify-center p-4 text-white">
+                            <div class="text-3xl mb-2">💖</div>
+                            <span class="font-bold text-xs text-yellow-200">LÁ BÀI 2</span>
+                            <span class="text-xs mt-2 font-bold opacity-80">Bấm để lật</span>
+                        </div>
+                        <div class="card-back absolute inset-0 bg-white rounded-2xl border-4 border-pink-300 flex flex-col items-center justify-between p-4 text-center overflow-y-auto">
+                            <span class="text-2xl">👑💝</span>
+                            <h3 class="font-bold text-xs text-pink-600 uppercase">Tình Cảm & Mối Quan Hệ</h3>
+                            <p class="text-xs text-gray-700 font-semibold leading-relaxed" id="fortune-text-2">Bước ra đường là người người yêu nhà nhà quý. Mỗi ngày yêu 24 người. Gia đình đầm ấm an vui sung túc.</p>
+                            <span class="text-[10px] bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full font-bold">Quẻ Đào Hoa</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="card-container h-64 cursor-pointer" onclick="flipCard(3)">
+                    <div id="card-inner-3" class="card-inner relative w-full h-full rounded-2xl shadow-md">
+                        <div class="card-front absolute inset-0 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-2xl border-4 border-white flex flex-col items-center justify-center p-4 text-white">
+                            <div class="text-3xl mb-2">💰</div>
+                            <span class="font-bold text-xs text-yellow-100">LÁ BÀI 3</span>
+                            <span class="text-xs mt-2 font-bold opacity-80">Bấm để lật</span>
+                        </div>
+                        <div class="card-back absolute inset-0 bg-white rounded-2xl border-4 border-yellow-300 flex flex-col items-center justify-between p-4 text-center overflow-y-auto">
+                            <span class="text-2xl">🤑🌟</span>
+                            <h3 class="font-bold text-xs text-yellow-600 uppercase">May Mắn & Tiền Tài</h3>
+                            <p class="text-xs text-gray-700 font-semibold leading-relaxed" id="fortune-text-3">Vạn sự may mắn, thi cử công việc hanh thông, ví tiền luôn rủng rỉnh!</p>
+                            <span class="text-[10px] bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-bold">Quẻ Phát Tài</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button id="btnFinishQuest" onclick="finishQuest()" class="hidden pixel-btn bg-yellow-400 hover:bg-yellow-500 text-yellow-950 font-bold text-xs sm:text-sm px-8 py-4 rounded-2xl border-2 border-yellow-600 cursor-pointer animate-bounce mt-4">
+                NHẬN QUÀ & THỔI NẾN 🎂 🎉
+            </button>
+        </section>
+
+        <!-- ================= KẾT THÚC: TIỆC SINH NHẬT & BÁNH & THƯ ================= -->
+        <section id="screen-celebration" class="hidden w-full flex-col items-center gap-6 py-4">
+            <div class="text-center animate-float">
+                <span class="bg-yellow-300 text-yellow-900 font-bold text-xs px-4 py-1.5 rounded-full border border-yellow-500">QUEST COMPLETED! 🎉</span>
+                <h1 class="font-bold text-2xl sm:text-3xl text-accentPink mt-3">HAPPY BIRTHDAY!</h1>
+            </div>
+
+            <!-- Cake Icon Display with glowing candle -->
+            <div class="relative flex flex-col items-center my-2">
+                <div class="text-8xl relative inline-block select-none">
+                    🎂
+                    <!-- Glowing flame animation above candle icon -->
+                    <div id="cakeFlame" class="absolute top-1 left-1/2 -translate-x-1/2 w-4 h-6 bg-amber-400 rounded-full border border-orange-500 flame-anim"></div>
+                </div>
+
+                <button onclick="openWishModal()" class="pixel-btn bg-pink-400 hover:bg-pink-500 text-white font-bold text-xs sm:text-sm px-6 py-3 rounded-2xl mt-4 flex items-center gap-2">
+                    <i class="fas fa-magic"></i> Viết Ước Nguyện & Thổi Nến ✨
+                </button>
+            </div>
+
+            <!-- Heartwarming Birthday Letter -->
+            <div class="w-full bg-white rounded-3xl p-6 sm:p-8 border-4 border-pink-300 shadow-xl relative">
+                <div class="absolute -top-5 left-1/2 -translate-x-1/2 bg-pink-400 text-white font-bold text-xs px-5 py-2 rounded-full border-2 border-white shadow">
+                    💌 BỨC THƯ TỪ TRÁI TIM
+                </div>
+
+                <div class="mt-4 text-gray-700 leading-relaxed text-sm sm:text-base space-y-4 font-semibold" id="letterBody">
+                    <p>An à, mày lớn rồi tao mừng lắm. Cuối cùng thì sau nửa năm mày đã bắt kịp tuổi của bọn tao 🙉.</p>
+                    <p>Chúc nhiều quá thì không cần thiết. Vì An đã có sẵn cho mình là nhan sắc đỉnh cao, nụ cười toả nắng, tiếng cười êm ái như tiếng đàn violin. Không chỉ thế, An còn mang trong mình sự đáng yêu và tích cực lan toả, chăm chỉ (lướt tik tok) và giàu lòng yêu thương.</p>
+                    <p>Thôi, chúc nhiều thì thừa mất, cất vào tim là vừa nhất.</p>
+                    <p class="text-right font-bold text-pink-600 italic mt-6">
+                        Em An sinh nhật vui vẻ ❤️‍🔥❤️‍🔥❤️‍🔥
+                    </p>
+                </div>
+
+                <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+                    <button onclick="triggerConfetti()" class="pixel-btn bg-pink-400 hover:bg-pink-500 text-white font-bold text-xs sm:text-sm px-6 py-3 rounded-2xl">
+                        Bắn Pháo Hoa 🎆
+                    </button>
+                    <button onclick="location.reload()" class="pixel-btn bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold text-xs sm:text-sm px-6 py-3 rounded-2xl">
+                        Chơi Lại Game 🔄
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Wish & Blow Candle Modal -->
+    <div id="wishModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 border-4 border-pink-300 shadow-2xl relative text-center">
+            <button onclick="closeWishModal()" class="absolute -top-3 -right-3 bg-pink-400 text-white w-8 h-8 rounded-full font-bold border-2 border-white shadow hover:bg-pink-500">✕</button>
+
+            <!-- Floating Wish Input Bubble -->
+            <h3 class="font-bold text-base text-pink-600 mb-2">✨ Ước Nguyện Tuổi Mới ✨</h3>
+            <p class="text-xs text-gray-500 mb-4 font-semibold">Nhập điều ước của em An trước khi thổi nến nè:</p>
+
+            <div class="relative mb-6">
+                <textarea id="wishText" rows="3" placeholder="Nhập điều ước nhỏ bé ở đây..." class="w-full p-3 border-2 border-pink-300 rounded-2xl text-xs font-semibold text-gray-700 focus:outline-none focus:border-pink-500 bg-pink-50/50"></textarea>
+            </div>
+
+            <!-- Interactive Cake Icon with candle -->
+            <div class="relative inline-block text-7xl my-2">
+                🎂
+                <div id="modalCakeFlame" class="absolute top-0 left-1/2 -translate-x-1/2 w-4 h-6 bg-amber-400 rounded-full border border-orange-500 flame-anim"></div>
+            </div>
+
+            <div class="mt-4">
+                <button id="btnBlowCandle" onclick="blowModalCandle()" class="pixel-btn bg-pink-400 hover:bg-pink-500 text-white text-xs font-bold px-6 py-3 rounded-2xl flex items-center gap-2 mx-auto">
+                    💨 Thổi Nến & Gửi Ước Nguyện 🌟
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Photo View Modal -->
+    <div id="photoModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-5 border-4 border-pink-300 shadow-2xl relative">
+            <button onclick="closePhotoModal()" class="absolute -top-3 -right-3 bg-pink-400 text-white w-8 h-8 rounded-full font-bold border-2 border-white shadow hover:bg-pink-500">✕</button>
+            <div class="w-full h-64 bg-pink-100 rounded-2xl overflow-hidden border-2 border-pink-200 mb-3">
+                <img id="modalImg" src="" alt="Photo" class="w-full h-full object-cover">
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="text-xs font-bold text-gray-500" id="modalImgTag">Bức ảnh đáng iuuu</span>
+                <button id="modalLikeBtn" onclick="likeModalPhoto()" class="pixel-btn bg-pink-400 hover:bg-pink-500 text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-2">
+                    <i class="fas fa-heart text-white"></i> Thả Tim (<span id="modalLikeCount">0</span>)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const CONFIG = {
+            friendName: "Trịnh Gia An",
+            quizQuestions: [
+                {
+                    type: "choice",
+                    badge: "Câu 1: Lần đầu gặp nhau",
+                    question: "Gia An và Dung dz gặp nhau lần đầu ở đâu?",
+                    options: [
+                        "Trường Archimedes",
+                        "Microsoft teams",
+                        "Quán trà đá",
+                        "Lotte Tây Hồ"
+                    ],
+                    correctIndex: 1,
+                    correctMsg: "Tốt rồi em An! Em An giỏi ❤️‍🔥",
+                    wrongMsg: "Wtf??? Hiểu ngay không nhớ à?!"
+                },
+                {
+                    type: "choice",
+                    badge: "Câu 2: Món khoái khẩu",
+                    question: "Món ăn khiến An đổ gục?",
+                    options: [
+                        "Hotdog trường A",
+                        "Xôi pate",
+                        "Bim bim",
+                        "Tất cả mọi thứ trừ nước mắm nguyên chất"
+                    ],
+                    correctIndex: 3,
+                    correctMsg: "Tốt rồi em An! Em An giỏi ❤️‍🔥",
+                    wrongMsg: "Chỉ thế thôi ấy hả??? Chắc chưa?"
+                },
+                {
+                    type: "text",
+                    badge: "Câu 3: Mật mã tình bạn",
+                    question: "Hãy gõ biệt danh của em An để mở khoá trạm này. Hoặc gõ ‘Oke’ để qua màn.",
+                    answers: ["conan", "én", "an an", "an trịnh", "khỉ đen nagi đít nhọ", "khỉ đen", "khỉ", "oke"],
+                    correctMsg: "Tuyệt vời em An ơi! ✨",
+                    wrongMsg: "Gõ biệt danh đáng yêu hoặc gõ 'Oke' nha em An!"
+                }
+            ],
+            galleryImages: [
+                "https://raw.githubusercontent.com/thichthitao1221-dev/Gian/refs/heads/ok/20250523_161213_Original.jpeg",
+                "https://raw.githubusercontent.com/thichthitao1221-dev/Gian/refs/heads/ok/DSC_0034_Original.jpeg",
+                "https://raw.githubusercontent.com/thichthitao1221-dev/Gian/refs/heads/ok/DSC_0059_Original.jpeg",
+                "https://raw.githubusercontent.com/thichthitao1221-dev/Gian/refs/heads/ok/DSC_0091_Original.jpeg",
+                "https://raw.githubusercontent.com/thichthitao1221-dev/Gian/refs/heads/ok/received_1386470285306411_Original.jpeg",
+                "https://raw.githubusercontent.com/thichthitao1221-dev/Gian/refs/heads/ok/received_1524330434776204_Original.jpeg",
+                "https://raw.githubusercontent.com/thichthitao1221-dev/Gian/refs/heads/ok/received_366966409399302_Original.jpeg",
+                "https://raw.githubusercontent.com/thichthitao1221-dev/Gian/refs/heads/ok/received_880132610459301_Original.jpeg"
+            ]
+        };
+
+        let currentQuizIndex = 0;
+        let cardsFlipped = 0;
+
+        function renderGallery() {
+            const gallery = document.getElementById("galleryGrid");
+            if (!gallery) return;
+
+            gallery.innerHTML = "";
+
+            // Xáo trộn ảnh, mỗi ảnh chỉ xuất hiện một lần
+            const shuffledImages = [...CONFIG.galleryImages];
+
+            for (let i = shuffledImages.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffledImages[i], shuffledImages[j]] = [shuffledImages[j], shuffledImages[i]];
+            }
+
+            shuffledImages.forEach((url, index) => {
+                const card = document.createElement("div");
+
+                card.className = "bg-white p-2 rounded-2xl border-2 border-pink-200 shadow-sm flex flex-col justify-between";
+
+                card.innerHTML = `
+                    <div class="w-full aspect-square bg-pink-100 rounded-xl overflow-hidden relative">
+                        <img
+                            src="${url}"
+                            alt="Kỷ niệm ${index + 1}"
+                            class="w-full h-full object-cover rounded-xl"
+                            loading="lazy"
+                            onerror="this.onerror=null; this.alt='Không tải được ảnh'; this.style.background='#fce7f3';"
+                        >
+                    </div>
+                    <button
+                        type="button"
+                        class="like-btn w-full mt-2 py-1.5 text-xs font-bold text-pink-500 bg-pink-50 hover:bg-pink-100 rounded-xl transition border border-pink-200"
+                        aria-label="Thả tim ảnh"
+                    >
+                        🤍 Thả tim
+                    </button>
+                `;
+
+                const likeButton = card.querySelector(".like-btn");
+
+                likeButton.addEventListener("click", () => {
+                    const liked = likeButton.dataset.liked === "true";
+
+                    likeButton.dataset.liked = String(!liked);
+                    likeButton.textContent = liked ? "🤍 Thả tim" : "💗 Đã thả tim";
+                    
+                    if (!liked) {
+                        createFloatingHearts();
+                    }
+                });
+
+                gallery.appendChild(card);
+            });
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const userNameTitle = document.getElementById('userNameTitle');
+            if (userNameTitle) userNameTitle.innerText = CONFIG.friendName;
+
+            renderGallery();
+
+            // Tự động phát nhạc ngay khi load trang
+            const player = document.getElementById('bgmPlayer');
+            const icon = document.getElementById('bgmIcon');
+            if (player) {
+                // Đảm bảo âm lượng tối đa
+                player.volume = 1.0;
+                
+                const playPromise = player.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        if (icon) icon.className = "fas fa-volume-up text-pink-600 animate-bounce";
+                    }).catch(err => {
+                        console.log("Trình duyệt chặn autoplay ban đầu, sẽ tự động bật lại khi click bất kỳ đâu:", err);
+                        // Thêm listener nếu trình duyệt yêu cầu tương tác lần đầu
+                        const enableAudioOnInteraction = () => {
+                            player.play().then(() => {
+                                if (icon) icon.className = "fas fa-volume-up text-pink-600 animate-bounce";
+                            });
+                            document.removeEventListener('click', enableAudioOnInteraction);
+                            document.removeEventListener('touchstart', enableAudioOnInteraction);
+                        };
+                        document.addEventListener('click', enableAudioOnInteraction);
+                        document.addEventListener('touchstart', enableAudioOnInteraction);
+                    });
+                }
+            }
+        });
+
+        function toggleAudio() {
+            const player = document.getElementById('bgmPlayer');
+            const icon = document.getElementById('bgmIcon');
+            if (player) {
+                if (player.paused) {
+                    player.play().then(() => {
+                        icon.className = "fas fa-volume-up text-pink-600 animate-bounce";
+                    }).catch(err => {
+                        console.log("Audio play blocked by browser:", err);
+                    });
+                } else {
+                    player.pause();
+                    icon.className = "fas fa-music text-pink-500";
+                }
+            }
+        }
+
+        function switchScreen(hideId, showId) {
+            const hideEl = document.getElementById(hideId);
+            const showEl = document.getElementById(showId);
+
+            if (hideEl) {
+                hideEl.classList.add('hidden');
+                hideEl.classList.remove('flex');
+            }
+            if (showEl) {
+                showEl.classList.remove('hidden');
+                showEl.classList.add('flex');
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function startGame() {
+            // Tự động phát nhạc khi người dùng nhấn bắt đầu
+            const player = document.getElementById('bgmPlayer');
+            const icon = document.getElementById('bgmIcon');
+            if (player && player.paused) {
+                player.play().then(() => {
+                    if (icon) icon.className = "fas fa-volume-up text-pink-600 animate-bounce";
+                }).catch(() => {});
+            }
+
+            switchScreen('screen-title', 'screen-station1');
+            loadQuizQuestion(0);
+        }
+
+        function loadQuizQuestion(index) {
+            currentQuizIndex = index;
+            const q = CONFIG.quizQuestions[index];
+            
+            document.getElementById('quizProgressText').innerText = `Câu ${index + 1}/${CONFIG.quizQuestions.length}`;
+            document.getElementById('quizBadge').innerText = q.badge;
+            document.getElementById('quizQuestion').innerText = q.question;
+            
+            const feedbackEl = document.getElementById('quizFeedback');
+            feedbackEl.classList.add('hidden');
+
+            const optionsContainer = document.getElementById('quizOptions');
+            const inputContainer = document.getElementById('quizInputContainer');
+
+            optionsContainer.innerHTML = '';
+
+            if (q.type === 'choice') {
+                optionsContainer.classList.remove('hidden');
+                inputContainer.classList.add('hidden');
+
+                q.options.forEach((opt, i) => {
+                    const btn = document.createElement('button');
+                    btn.className = "w-full p-4 text-left font-bold text-gray-700 bg-pink-50 hover:bg-pink-100 border-2 border-pink-200 rounded-2xl transition transform hover:scale-[1.01] flex items-center justify-between text-xs sm:text-sm";
+                    btn.innerHTML = `<span>${opt}</span><i class="fas fa-chevron-right text-xs text-pink-400"></i>`;
+                    btn.onclick = () => checkChoiceAnswer(i);
+                    optionsContainer.appendChild(btn);
+                });
+            } else {
+                optionsContainer.classList.add('hidden');
+                inputContainer.classList.remove('hidden');
+                document.getElementById('quizInput').value = '';
+            }
+        }
+
+        function checkChoiceAnswer(optionIdx) {
+            const q = CONFIG.quizQuestions[currentQuizIndex];
+            const feedbackEl = document.getElementById('quizFeedback');
+            feedbackEl.classList.remove('hidden', 'bg-red-100', 'text-red-600', 'bg-green-100', 'text-green-600');
+
+            if (optionIdx === q.correctIndex) {
+                feedbackEl.classList.add('bg-green-100', 'text-green-600');
+                feedbackEl.innerText = q.correctMsg;
+
+                setTimeout(() => {
+                    if (currentQuizIndex + 1 < CONFIG.quizQuestions.length) {
+                        loadQuizQuestion(currentQuizIndex + 1);
+                    } else {
+                        switchScreen('screen-station1', 'screen-station2');
+                    }
+                }, 1200);
+            } else {
+                feedbackEl.classList.add('bg-red-100', 'text-red-600');
+                feedbackEl.innerText = q.wrongMsg;
+            }
+        }
+
+        function checkTextAnswer() {
+            const inputVal = document.getElementById('quizInput').value.trim().toLowerCase();
+            const q = CONFIG.quizQuestions[currentQuizIndex];
+            const feedbackEl = document.getElementById('quizFeedback');
+            
+            const isCorrect = q.answers.some(ans => inputVal.includes(ans.toLowerCase()));
+            feedbackEl.classList.remove('hidden', 'bg-red-100', 'text-red-600', 'bg-green-100', 'text-green-600');
+
+            if (isCorrect || inputVal !== "") {
+                feedbackEl.classList.add('bg-green-100', 'text-green-600');
+                feedbackEl.innerText = q.correctMsg;
+
+                // Show nickname list
+                setTimeout(() => {
+                    document.getElementById('quizInputContainer').classList.add('hidden');
+                    document.getElementById('nicknameReveal').classList.remove('hidden');
+                }, 800);
+            } else {
+                feedbackEl.classList.add('bg-red-100', 'text-red-600');
+                feedbackEl.innerText = q.wrongMsg;
+            }
+        }
+
+        function goToStation2() {
+            switchScreen('screen-station1', 'screen-station2');
+        }
+
+        function openPhotoModal(idx) {
+            currentModalPhotoIndex = idx;
+            document.getElementById('modalImg').src = CONFIG.galleryImages[idx];
+            document.getElementById('modalImgTag').innerText = `Ảnh kỷ niệm ${idx + 1}`;
+            document.getElementById('modalLikeCount').innerText = photoLikes[idx];
+            document.getElementById('photoModal').classList.remove('hidden');
+        }
+
+        function closePhotoModal() {
+            document.getElementById('photoModal').classList.add('hidden');
+        }
+
+        function likeModalPhoto() {
+            if (currentModalPhotoIndex !== null) {
+                photoLikes[currentModalPhotoIndex]++;
+                document.getElementById('modalLikeCount').innerText = photoLikes[currentModalPhotoIndex];
+                
+                const cardCount = document.querySelector(`#like-count-${currentModalPhotoIndex} .count`);
+                if (cardCount) cardCount.innerText = photoLikes[currentModalPhotoIndex];
+
+                createFloatingHearts();
+            }
+        }
+
+        function finishStation2() {
+            switchScreen('screen-station2', 'screen-station3');
+        }
+
+        function flipCard(cardNumber) {
+            const cardInner = document.getElementById(`card-inner-${cardNumber}`);
+            if (cardInner && !cardInner.classList.contains('flipped')) {
+                createFloatingHearts();
+                cardInner.classList.add('flipped');
+                cardsFlipped++;
+
+                document.getElementById('cardsDrawnCount').innerText = `Đã lật: ${cardsFlipped}/3`;
+
+                if (cardsFlipped >= 3) {
+                    setTimeout(() => {
+                        const btnFinish = document.getElementById('btnFinishQuest');
+                        if (btnFinish) btnFinish.classList.remove('hidden');
+                    }, 800);
+                }
+            }
+        }
+
+        function finishQuest() {
+            switchScreen('screen-station3', 'screen-celebration');
+            triggerConfetti();
+        }
+
+        function openWishModal() {
+            document.getElementById('wishModal').classList.remove('hidden');
+        }
+
+        function closeWishModal() {
+            document.getElementById('wishModal').classList.add('hidden');
+        }
+
+        function blowModalCandle() {
+            const modalFlame = document.getElementById('modalCakeFlame');
+            const cakeFlame = document.getElementById('cakeFlame');
+
+            if (modalFlame) modalFlame.classList.add('hidden');
+            if (cakeFlame) cakeFlame.classList.add('hidden');
+
+            closeWishModal();
+            triggerConfetti();
+        }
+
+        function triggerConfetti() {
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 150,
+                    spread: 90,
+                    origin: { y: 0.6 }
+                });
+            }
+        }
+
+        function createFloatingHearts() {
+            for (let i = 0; i < 5; i++) {
+                const heart = document.createElement('div');
+                heart.className = 'floating-heart text-pink-400 text-xl';
+                heart.innerHTML = '❤️';
+                heart.style.left = (Math.random() * 80 + 10) + 'vw';
+                heart.style.top = (Math.random() * 20 + 60) + 'vh';
+                document.body.appendChild(heart);
+
+                setTimeout(() => {
+                    heart.remove();
+                }, 2000);
+            }
+        }
+    </script>
+</body>
+</html>
